@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="雲端宮線上靈籤：許願、擲筊，連續三個聖筊後抽出一支原創籤詩。僅供娛樂。">
+<title>雲端宮線上靈籤</title>
+<style>
+:root{
+  --red:#B3261E;
+  --gold:#D4A84B;
+  --bg:#5C0F0B;
+  --paper:#F7EFDD;
+  --ink:#2B1D14;
+  --muted:#6B5646;
+  --field:#FFFAF0;
+  --font-kai:"DFKai-SB","BiauKai","標楷體","Kaiti TC","KaiTi","STKaiti","PMingLiU","Songti TC","Noto Serif TC","Noto Serif CJK TC",serif;
+  --font-sans:system-ui,-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{font-size:16px}
+body{
+  margin:0;
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 18% 8%,rgba(212,168,75,.14),transparent 42%),
+    radial-gradient(circle at 86% 92%,rgba(212,168,75,.10),transparent 46%);
+  background-attachment:fixed;
+  color:var(--ink);
+  font-family:var(--font-sans);
+  line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+.app{max-width:480px;min-height:100vh;margin:0 auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:14px}
+main{flex:1}
+
+/* 廟匾 */
+.plaque{position:relative;padding:14px 56px;text-align:center;background:linear-gradient(#C22E25,var(--red) 55%,#9A1F18);border:3px double var(--gold);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.plaque h1{margin:0;font-family:var(--font-kai);font-size:2.3rem;line-height:1.2;letter-spacing:.35em;text-indent:.35em;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.plaque p{margin:2px 0 0;font-size:.95rem;letter-spacing:.5em;text-indent:.5em;color:var(--paper)}
+.mute{position:absolute;top:8px;right:8px;width:44px;height:44px;padding:0;display:grid;place-items:center;border-radius:50%;border:1.5px solid var(--gold);background:rgba(92,15,11,.55);color:var(--gold);cursor:pointer;touch-action:manipulation}
+.mute svg{width:24px;height:24px}
+.mute .ico-off{display:none}
+.mute[aria-pressed="true"] .ico-on{display:none}
+.mute[aria-pressed="true"] .ico-off{display:block}
+
+/* 步驟指示 */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;scroll-margin-top:10px}
+.steps li{display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 2px;border-radius:999px;border:1.5px solid rgba(212,168,75,.45);color:rgba(247,239,221,.75);font-size:.9rem;white-space:nowrap}
+.steps .num{font-family:var(--font-kai)}
+.steps li.done{border-color:var(--gold);color:var(--gold)}
+.steps li[aria-current="step"]{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
+
+/* 卡片與畫面切換 */
+.card{background:var(--paper);border:2px solid var(--gold);border-radius:14px;padding:20px 18px 22px;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.stage.fade-out{opacity:0;transition:opacity .15s ease-in}
+.stage.fade-in{animation:fadeIn .15s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+h2{margin:0 0 6px;text-align:center;font-family:var(--font-kai);font-size:1.6rem;letter-spacing:.12em;color:var(--red)}
+h2:focus{outline:none}
+.lead{margin:0 0 16px;text-align:center;font-size:.95rem;color:var(--muted)}
+
+/* 許願表單 */
+.field{min-width:0;margin:0 0 10px;padding:0;border:0}
+.field>label,.field>legend{display:block;margin-bottom:6px;padding:0;font-weight:700}
+.cats{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cats input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.cats label{display:flex;align-items:center;justify-content:center;min-height:46px;border:1.5px solid var(--red);border-radius:10px;background:var(--field);color:var(--red);font-family:var(--font-kai);font-size:1.15rem;cursor:pointer;user-select:none;transition:background .15s,color .15s}
+.cats input:checked+label{background:var(--red);color:var(--paper);box-shadow:inset 0 0 0 2px var(--gold)}
+.cats input:focus-visible+label{outline:3px solid var(--ink);outline-offset:2px}
+input[type="date"],textarea{width:100%;min-height:46px;padding:11px 12px;border:1.5px solid #B79C6C;border-radius:10px;background:var(--field);color:var(--ink);font:inherit}
+textarea{display:block;min-height:92px;resize:vertical}
+input:focus-visible,textarea:focus-visible{outline:3px solid var(--red);outline-offset:1px}
+.field-foot{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.count{margin-top:4px;font-size:.85rem;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.err{min-height:1.2em;margin:4px 0 0;font-size:.88rem;font-weight:600;color:var(--red)}
+.privacy{margin:10px 0 0;text-align:center;font-size:.82rem;color:var(--muted)}
+
+/* 按鈕 */
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;padding:10px 16px;border-radius:12px;font:inherit;font-size:1.1rem;font-weight:700;letter-spacing:.1em;cursor:pointer;touch-action:manipulation;transition:transform .08s,filter .15s,opacity .15s}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible,.tube:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.mute:focus-visible,.actions .btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn.primary{border:2px solid var(--gold);background:var(--red);color:var(--paper)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.gold{border-color:var(--red);background:var(--gold);color:var(--ink)}
+.btn.secondary{border:2px solid var(--gold);background:var(--paper);color:var(--red)}
+.btn.link{min-height:44px;margin-top:4px;border:0;background:none;color:var(--muted);font-size:.95rem;font-weight:400;letter-spacing:0;text-decoration:underline}
+.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+
+/* 擲筊 */
+.report{margin:0 0 12px;padding:10px 12px;border-left:4px solid var(--red);border-radius:0 8px 8px 0;background:rgba(179,38,30,.07);font-family:var(--font-kai);font-size:1.05rem;line-height:1.6;overflow-wrap:anywhere;max-height:calc(1.6em * 4 + 20px);overflow-y:auto}
+.altar{height:216px;padding-bottom:18px;display:flex;justify-content:center;align-items:flex-end;gap:36px;overflow:hidden;border:2px solid var(--gold);border-radius:12px;background:linear-gradient(#4A2A1A,#2F190F)}
+.cup{width:68px;height:119px;will-change:transform}
+.cup-persp{width:100%;height:100%;perspective:520px}
+.cup-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d}
+.face{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.round{transform:rotateX(180deg)}
+.face svg{display:block;width:100%;height:100%;filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
+.caps{display:flex;justify-content:center;gap:36px;min-height:1.5em;margin-top:6px}
+.caps span{width:68px;text-align:center;font-size:.85rem;color:var(--muted)}
+.jiao-result{min-height:4em;margin:2px 0 8px;text-align:center}
+.jiao-result strong{display:block;min-height:1.2em;font-family:var(--font-kai);font-size:2rem;line-height:1.2;color:var(--red)}
+.jiao-result span{font-size:.95rem}
+.jiao-result.xiao strong{color:#8A6410}
+.jiao-result.yin strong{color:var(--ink)}
+.progress{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;margin:0 0 14px;font-size:.95rem}
+.lamps{display:flex;gap:10px}
+.lamp{width:24px;height:24px;border-radius:50%;border:2px solid var(--gold);background:rgba(43,29,20,.12);transition:background .3s,box-shadow .3s}
+.lamp.on{background:radial-gradient(circle at 35% 30%,#FFE9A8,var(--gold) 60%,#B8862B);box-shadow:0 0 14px 4px rgba(212,168,75,.75)}
+.tally{color:var(--muted);font-variant-numeric:tabular-nums}
+.history{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;min-height:28px;margin-top:12px}
+.chip{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;font-family:var(--font-kai);font-size:.95rem;line-height:1}
+.chip.sheng{background:var(--red);color:var(--paper)}
+.chip.xiao{background:var(--gold);color:var(--ink)}
+.chip.yin{background:var(--ink);color:var(--paper)}
+.hint{margin:10px 0 0;text-align:center;font-size:.85rem;color:var(--muted)}
+
+/* 抽籤 */
+.tube{display:block;width:190px;max-width:70%;margin:4px auto 0;padding:0;border:0;border-radius:14px;background:none;cursor:pointer;touch-action:manipulation}
+.tube:disabled{cursor:default}
+.tube svg{display:block;width:100%;height:auto;overflow:visible;transform-origin:50% 92%}
+.tube.shaking svg{animation:shake 1.5s ease-in-out}
+@keyframes shake{
+  0%,100%{transform:rotate(0)}
+  8%{transform:rotate(-11deg)}16%{transform:rotate(10deg)}
+  24%{transform:rotate(-10deg)}32%{transform:rotate(11deg)}
+  40%{transform:rotate(-11deg)}48%{transform:rotate(10deg)}
+  56%{transform:rotate(-10deg)}64%{transform:rotate(11deg)}
+  72%{transform:rotate(-9deg)}80%{transform:rotate(8deg)}
+  88%{transform:rotate(-5deg)}94%{transform:rotate(3deg)}
+}
+.stick-out{transform:translateY(60px);transition:transform .5s cubic-bezier(.2,.9,.3,1.25)}
+.tube.drawn .stick-out{transform:translateY(-22px)}
+.draw-msg{min-height:1.6em;margin:8px 0 14px;text-align:center;font-family:var(--font-kai);font-size:1.5rem;color:var(--red)}
+
+/* 解籤 */
+.result-card.rise{animation:rise .5s ease-out both}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.res-head{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin-bottom:4px;color:var(--ink);letter-spacing:.08em}
+.level{padding:2px 12px;border-radius:999px;font-size:1.15rem;letter-spacing:.1em}
+.level[data-level="上上"]{background:var(--red);color:var(--paper)}
+.level[data-level="上吉"]{background:var(--gold);color:var(--ink)}
+.level[data-level="中平"]{box-shadow:inset 0 0 0 1.5px var(--ink);color:var(--ink)}
+.level[data-level="下下"]{background:var(--ink);color:var(--paper)}
+.res-title{margin:0;text-align:center;font-family:var(--font-kai);font-size:1.5rem;color:var(--red);letter-spacing:.2em}
+.poem-wrap{display:flex;justify-content:center;margin:10px 0 14px;padding:14px 0 16px;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.poem{writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;font-family:var(--font-kai);font-size:1.75rem;line-height:2;letter-spacing:.2em}
+.poem p{margin:0}
+.result-card h3{margin:14px 0 4px;font-size:.95rem;letter-spacing:.08em;color:var(--red)}
+.result-card h3::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;vertical-align:middle;background:var(--gold);transform:rotate(45deg)}
+.result-card p{margin:0}
+.res-wish{color:var(--muted);overflow-wrap:anywhere}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.actions .wide{grid-column:1/-1}
+.actions .btn{font-size:1rem;letter-spacing:.04em}
+
+footer{padding-top:4px;text-align:center;font-size:.8rem;color:rgba(247,239,221,.78)}
+
+/* 系統設定為減少動態效果時，只保留淡入 */
+@media (prefers-reduced-motion:reduce){
+  .btn,.cats label,.lamp{transition:none}
+  .stage.fade-out{transition:none}
+  .tube.shaking svg{animation:fadeIn .3s ease-out}
+  .stick-out{transition:none}
+  .result-card.rise{animation:fadeIn .3s ease-out both}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="plaque">
+    <h1>雲端宮</h1>
+    <p>線上靈籤</p>
+    <button type="button" class="mute" id="muteBtn" aria-pressed="false" aria-label="靜音">
+      <svg class="ico-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg class="ico-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <ol class="steps" id="steps" aria-label="求籤步驟">
+    <li data-step="wish"><span class="num">一</span>許願</li>
+    <li data-step="throw"><span class="num">二</span>擲筊</li>
+    <li data-step="draw"><span class="num">三</span>抽籤</li>
+    <li data-step="result"><span class="num">四</span>解籤</li>
+  </ol>
+
+  <main>
+    <!-- 一、許願 -->
+    <section class="stage card" id="stage-wish" aria-labelledby="h-wish">
+      <h2 id="h-wish" tabindex="-1">誠心許願</h2>
+      <p class="lead">選擇所求類別，填寫生日與想請示的事，再向神明擲筊。</p>
+      <form id="wishForm" novalidate>
+        <fieldset class="field">
+          <legend>所求類別</legend>
+          <div class="cats">
+            <input type="radio" name="category" id="cat0" value="學業"><label for="cat0">學業</label>
+            <input type="radio" name="category" id="cat1" value="感情"><label for="cat1">感情</label>
+            <input type="radio" name="category" id="cat2" value="事業"><label for="cat2">事業</label>
+            <input type="radio" name="category" id="cat3" value="健康"><label for="cat3">健康</label>
+            <input type="radio" name="category" id="cat4" value="財運"><label for="cat4">財運</label>
+            <input type="radio" name="category" id="cat5" value="其他"><label for="cat5">其他</label>
+          </div>
+          <p class="err" id="errCategory" aria-live="polite"></p>
+        </fieldset>
+        <div class="field">
+          <label for="birthday">生日</label>
+          <input type="date" id="birthday" name="birthday" min="1900-01-01" placeholder="YYYY-MM-DD" autocomplete="off">
+          <p class="err" id="errBirthday" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="wish">想請示的事</label>
+          <textarea id="wish" name="wish" rows="3" maxlength="100" placeholder="例如：期中考能否順利？"></textarea>
+          <div class="field-foot">
+            <p class="err" id="errWish" aria-live="polite"></p>
+            <span class="count" id="wishCount">0／100</span>
+          </div>
+        </div>
+        <button type="submit" class="btn primary" id="startBtn" aria-disabled="true">開始擲筊</button>
+        <p class="privacy">願望與生日只留在這個畫面，不會儲存或上傳。</p>
+      </form>
+    </section>
+
+    <!-- 二、擲筊 -->
+    <section class="stage card" id="stage-throw" aria-labelledby="h-throw" hidden>
+      <h2 id="h-throw" tabindex="-1">擲筊請示</h2>
+      <blockquote class="report" id="report"></blockquote>
+      <div class="altar" aria-hidden="true">
+        <div class="cup" id="cupL"><div class="cup-persp"><div class="cup-inner"><div class="face flat"></div><div class="face round"></div></div></div></div>
+        <div class="cup" id="cupR"><div class="cup-persp"><div class="cup-inner"><div class="face flat"></div><div class="face round"></div></div></div></div>
+      </div>
+      <div class="caps" aria-hidden="true"><span id="capL"></span><span id="capR"></span></div>
+      <div class="jiao-result" id="jiaoResult" aria-live="polite"><strong id="jiaoName"></strong><span id="jiaoDesc"></span></div>
+      <div class="progress">
+        <span aria-hidden="true">連續聖筊</span>
+        <div class="lamps" id="lamps" role="img" aria-label="連續聖筊 0／3"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span></div>
+        <span class="tally" id="tally"></span>
+      </div>
+      <button type="button" class="btn primary" id="throwBtn">擲筊</button>
+      <button type="button" class="btn primary gold" id="toDrawBtn" hidden>前往抽籤</button>
+      <div class="history" id="history" aria-label="擲筊歷程"></div>
+      <p class="hint">也可以按鍵盤空白鍵擲筊。連續三個聖筊才能抽籤。</p>
+      <button type="button" class="btn link" id="rewishBtn">重新許願</button>
+    </section>
+
+    <!-- 三、抽籤 -->
+    <section class="stage card" id="stage-draw" aria-labelledby="h-draw" hidden>
+      <h2 id="h-draw" tabindex="-1">搖筒抽籤</h2>
+      <p class="lead">神明已允准。點擊籤筒，搖出一支靈籤。</p>
+      <button type="button" class="tube" id="tubeBtn" aria-label="搖籤筒">
+        <svg viewBox="0 0 160 230" aria-hidden="true">
+          <ellipse cx="80" cy="84" rx="47" ry="11" fill="#3A0806"/>
+          <g fill="#E9C98F" stroke="#A9814A" stroke-width="1">
+            <rect x="50" y="30" width="9" height="90" rx="3" transform="rotate(-11 54 120)"/>
+            <rect x="60" y="22" width="9" height="96" rx="3" transform="rotate(-5 64 118)"/>
+            <rect x="88" y="26" width="9" height="94" rx="3" transform="rotate(4 92 120)"/>
+            <rect x="100" y="32" width="9" height="88" rx="3" transform="rotate(11 104 120)"/>
+            <rect x="94" y="20" width="9" height="98" rx="3" transform="rotate(7 98 118)"/>
+            <rect x="68" y="28" width="9" height="92" rx="3" transform="rotate(-2 72 120)"/>
+          </g>
+          <g class="stick-out">
+            <rect x="74" y="34" width="12" height="104" rx="3" fill="#F2D7A2" stroke="#A9814A" stroke-width="1"/>
+            <rect x="74" y="34" width="12" height="22" rx="3" fill="#B3261E"/>
+          </g>
+          <path d="M33 84L41 208Q80 222 119 208L127 84Q80 100 33 84Z" fill="#B3261E" stroke="#D4A84B" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M34.5 104Q80 120 125.5 104" fill="none" stroke="#D4A84B" stroke-width="3"/>
+          <path d="M40 192Q80 207 120 192" fill="none" stroke="#D4A84B" stroke-width="3"/>
+          <circle cx="80" cy="152" r="25" fill="#D4A84B" stroke="#8A1B15" stroke-width="2"/>
+          <text x="80" y="163" text-anchor="middle" font-size="30" fill="#5C0F0B" style="font-family:var(--font-kai)">籤</text>
+        </svg>
+      </button>
+      <p class="draw-msg" id="drawMsg" aria-live="polite"></p>
+      <button type="button" class="btn primary" id="shakeBtn">搖籤筒</button>
+      <button type="button" class="btn primary gold" id="viewBtn" hidden>看籤詩</button>
+    </section>
+
+    <!-- 四、解籤 -->
+    <section class="stage" id="stage-result" aria-labelledby="resHead" hidden>
+      <article class="card result-card" id="resultCard">
+        <h2 class="res-head" id="resHead" tabindex="-1"><span id="resNo"></span><span class="level" id="resLevel"></span></h2>
+        <p class="res-title" id="resTitle"></p>
+        <div class="poem-wrap"><div class="poem" id="poem"></div></div>
+        <h3>白話解說</h3>
+        <p id="resExplain"></p>
+        <h3 id="resAdviceLabel"></h3>
+        <p id="resAdvice"></p>
+        <h3>所求之事</h3>
+        <p class="res-wish" id="resWish"></p>
+      </article>
+      <div class="actions">
+        <button type="button" class="btn secondary" id="copyBtn">複製籤詩文字</button>
+        <button type="button" class="btn secondary" id="saveBtn">下載籤詩圖片</button>
+        <button type="button" class="btn primary wide" id="againBtn">再求一支</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>本網頁僅供娛樂，與任何真實宮廟無關。籤詩皆為原創。</footer>
+</div>
+
+<noscript><p style="color:#F7EFDD;text-align:center">此網頁需要啟用 JavaScript 才能使用。</p></noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ========== 籤詩資料：30 首原創，上上 6、上吉 10、中平 10、下下 4 ========== */
+  var LOTS = [
+    { no: 1, level: '上上', title: '雲開見月',
+      poem: ['雲開霧散月華明', '久困蛟龍得水行', '但守初心勤著力', '春風一到百花榮'],
+      explain: '先前的阻礙正在散去，局勢轉為明朗。維持原本的用心、持續努力，時機一到自然會有好結果。',
+      advice: { 學業: '觀念已經打通，照著進度複習就能考出實力。', 感情: '誤會可望解開，主動說出心意會有回應。', 事業: '卡關的事會出現轉機，把握主動爭取的機會。', 健康: '狀況逐漸好轉，維持規律作息即可。', 財運: '正財穩定增加，不必冒險求快。', 其他: '所求之事方向正確，照計畫進行。' } },
+    { no: 2, level: '上吉', title: '順水行舟',
+      poem: ['順風揚帆出港灣', '一路波平兩岸寬', '莫向中途貪景色', '舟行到岸始心安'],
+      explain: '眼前情勢順利，像順風出航的船。只要不在半路分心鬆懈，一路堅持到最後，事情就能圓滿完成。',
+      advice: { 學業: '進度順利，別因為有把握就鬆懈最後一段。', 感情: '相處融洽，多用心經營而不是視為理所當然。', 事業: '工作進展順利，專注把手上的事做到收尾。', 健康: '身體狀況不錯，保持運動習慣別中斷。', 財運: '收入平順，避免臨時起意的大筆開銷。', 其他: '事情正往好的方向走，堅持到完成為止。' } },
+    { no: 3, level: '中平', title: '靜待花開',
+      poem: ['庭前新種一株梅', '枝上猶無半點蕾', '且把耐心勤灌溉', '冬深自見雪中開'],
+      explain: '現在還不是收成的時候，著急也沒有用。持續累積、耐心等待，條件成熟時成果自然會出現。',
+      advice: { 學業: '成績暫時看不出進步，持續累積就會反映出來。', 感情: '緣分還在醞釀，先把自己的生活過好。', 事業: '時機未到，先充實能力，不急著轉換跑道。', 健康: '調養需要時間，按部就班不要求速效。', 財運: '短期內進帳平平，適合穩穩儲蓄。', 其他: '再等一等，現在做決定還太早。' } },
+    { no: 4, level: '上吉', title: '貴人相助',
+      poem: ['獨行山路霧茫茫', '忽遇樵夫指道旁', '謝過殷勤前路去', '轉彎便見好村莊'],
+      explain: '獨自摸索時會遇到願意指點你的人。虛心請教、接受幫助，原本看不清的路很快就會變得清楚。',
+      advice: { 學業: '遇到不懂的地方就去問老師或同學，會有收穫。', 感情: '朋友的建議值得聽，也可能經人介紹遇到對象。', 事業: '有前輩願意提點，主動請教會少走冤枉路。', 健康: '找專業的醫師諮詢，比自己上網查更可靠。', 財運: '理財上多聽有經驗的人意見，不要獨自冒進。', 其他: '開口求助就會有人幫忙，不必一個人硬撐。' } },
+    { no: 5, level: '中平', title: '守成為上',
+      poem: ['田中禾稻正青青', '不旱不澇歲亦平', '莫羨鄰家新置地', '守成安穩是豐盈'],
+      explain: '目前的狀況平穩，沒有大好也沒有大壞。與其羨慕別人、貿然改變，不如把現有的一切照顧好。',
+      advice: { 學業: '維持目前的讀書節奏，不必跟別人比進度。', 感情: '感情平淡但穩定，珍惜眼前的人。', 事業: '現在的工作值得繼續做，暫時不宜大幅變動。', 健康: '沒有大礙，維持原本的生活習慣就好。', 財運: '守住現有的積蓄，不適合擴大投資。', 其他: '維持現狀比改變更好。' } },
+    { no: 6, level: '下下', title: '逆風行舟',
+      poem: ['逆風搖櫓浪頭高', '用盡心機力亦勞', '不若收帆歸岸泊', '待他風定再撐篙'],
+      explain: '眼前阻力很大，硬要往前只會白費力氣。先停下來休息、保留實力，等情勢轉變後再出發會順利得多。',
+      advice: { 學業: '方法可能不對，先停下來調整讀書方式再繼續。', 感情: '此時強求容易起爭執，先給彼此一點空間。', 事業: '計畫阻力大，暫緩推進並重新評估會比較好。', 健康: '身體在提醒你休息，不要硬撐，該看醫生就去。', 財運: '近期不宜投資或借貸，守住本金最重要。', 其他: '時機不對，緩一緩再說。' } },
+    { no: 7, level: '上吉', title: '勤耕有穫',
+      poem: ['晨起荷鋤向隴頭', '汗沾衣袖未曾休', '一分耕作一分穫', '倉廩盈時樂自悠'],
+      explain: '付出多少就會得到多少，沒有捷徑但也不會白費。只要腳踏實地去做，成果會如實回到你身上。',
+      advice: { 學業: '多寫一題就多一分把握，努力會反映在成績上。', 感情: '真心付出會被看見，用行動表達比說的有用。', 事業: '踏實做事會累積口碑，升遷加薪可以期待。', 健康: '規律運動和飲食的效果會慢慢顯現。', 財運: '靠勞力與專業賺來的錢最穩，收入會成長。', 其他: '肯下功夫就會有結果。' } },
+    { no: 8, level: '上上', title: '魚躍龍門',
+      poem: ['三年磨劍在寒窗', '一旦鋒芒試雪霜', '魚躍龍門雲路闊', '聲名從此四方揚'],
+      explain: '長期的準備終於到了展現的時刻。放心拿出實力，這次的表現會讓你跨上新的台階，也會被更多人看見。',
+      advice: { 學業: '準備充分，考試與發表都能有亮眼表現。', 感情: '鼓起勇氣表白或求婚，成功的機會很高。', 事業: '升遷、錄取或得獎的好消息將至，勇於爭取。', 健康: '精神體力俱佳，長期調養已見成效。', 財運: '努力換來實質回報，可望有一筆不錯的收入。', 其他: '時機成熟，放手去做就對了。' } },
+    { no: 9, level: '中平', title: '半晴半雨',
+      poem: ['山前才見日初晴', '嶺後還聞雨打聲', '出外不妨攜一傘', '陰晴由他我自行'],
+      explain: '情勢好壞參半，變化難以預料。事先做好兩手準備，就不會被突然的狀況打亂，照自己的步調前進即可。',
+      advice: { 學業: '有的科目順、有的不順，替弱科多留一些時間。', 感情: '對方態度忽冷忽熱，保持平常心不必過度解讀。', 事業: '計畫可能臨時生變，先準備好備案。', 健康: '天氣和作息變化大，注意保暖與睡眠。', 財運: '收支有進有出，預留一筆緊急預備金。', 其他: '結果還不確定，做好兩種準備。' } },
+    { no: 10, level: '上吉', title: '枯木逢春',
+      poem: ['老樹經冬葉盡凋', '行人皆道已枯焦', '誰知一夜東風到', '嫩綠新芽上舊條'],
+      explain: '看似沒有希望的事即將出現生機。別因為旁人不看好就放棄，轉機已經在路上，很快會看到新的開始。',
+      advice: { 學業: '落後的科目有機會追上，現在開始並不晚。', 感情: '冷淡的關係有回暖的機會，舊緣也可能再續。', 事業: '停滯的案子會重新動起來，待業者有新機會。', 健康: '久病有起色，配合治療會逐步恢復。', 財運: '之前的虧損有機會慢慢補回來。', 其他: '以為沒希望的事會出現轉機。' } },
+    { no: 11, level: '中平', title: '三思後行',
+      poem: ['岔路當前兩不明', '東西南北各有程', '停鞭細問來時客', '看定方針再啟行'],
+      explain: '眼前有好幾個選擇，各有利弊，一時難以判斷。不要急著決定，多蒐集資訊、問過有經驗的人再行動。',
+      advice: { 學業: '選課或選組前多問學長姐，別只憑感覺。', 感情: '心意未定時不要輕易承諾，想清楚再說。', 事業: '面對多個機會先比較清楚，不急著答應。', 健康: '治療方式多聽一位醫師的意見再決定。', 財運: '投資前先做功課，看不懂的不要碰。', 其他: '先停下來想清楚，再做決定。' } },
+    { no: 12, level: '上吉', title: '月圓人和',
+      poem: ['中庭月色淨如霜', '桂子飄來滿院香', '親友相逢同把盞', '笑談不覺夜初長'],
+      explain: '這是人際和諧、家庭和樂的好時期。多與親友相聚，和氣會為你帶來助力，許多事情在談笑間就能解決。',
+      advice: { 學業: '和同學一起討論、組讀書會，效果比獨自讀好。', 感情: '感情和睦，適合見家長或安排兩人出遊。', 事業: '團隊合作愉快，人和帶動事情順利。', 健康: '心情開朗對身體有益，多和親友相聚。', 財運: '人脈帶來財路，合作的生意可以考慮。', 其他: '以和為貴，事情自然好談。' } },
+    { no: 13, level: '上上', title: '旭日東昇',
+      poem: ['曉色初分海上霞', '一輪紅日出天涯', '光臨萬戶皆歡喜', '處處春風送物華'],
+      explain: '運勢如同剛升起的太陽，正要進入最好的階段。新的開始充滿希望，無論做什麼都容易得到支持與好結果。',
+      advice: { 學業: '新學期、新目標都有好的開始，學習狀態極佳。', 感情: '新戀情可望萌芽，有伴者感情更加升溫。', 事業: '新工作或新計畫起步順利，前景看好。', 健康: '朝氣十足，適合開始新的運動計畫。', 財運: '財運上升，新的收入來源正在出現。', 其他: '新的開始充滿希望，大膽起步。' } },
+    { no: 14, level: '中平', title: '細水長流',
+      poem: ['山泉一線出林間', '不疾不徐繞石灣', '莫笑涓涓流勢小', '終年不竭到江關'],
+      explain: '進展雖然緩慢，但只要不中斷就會到達目的地。現在重要的不是速度，而是每天都持續做一點。',
+      advice: { 學業: '每天固定讀一點，比考前熬夜有效。', 感情: '感情靠日常的小事累積，不必追求轟轟烈烈。', 事業: '成果來得慢，但穩定累積終會被肯定。', 健康: '養成每天活動的小習慣，長期效果最好。', 財運: '小額定期儲蓄，積少成多。', 其他: '慢慢來，持續做就會到。' } },
+    { no: 15, level: '下下', title: '鏡花水月',
+      poem: ['鏡裡看花花似真', '水中撈月月無痕', '勸君莫逐虛名利', '回首家園是本根'],
+      explain: '你追求的目標可能只是看起來美好，實際上難以掌握。先放下不切實際的期待，回頭把基本的事情做好。',
+      advice: { 學業: '別想靠猜題或捷徑，回到基本觀念重新打底。', 感情: '對方可能不如想像，認清現實別一廂情願。', 事業: '聽起來太好的機會要查證，小心空頭承諾。', 健康: '偏方不可信，請回到正規醫療。', 財運: '高報酬的投資多半有詐，千萬不要跟風。', 其他: '看起來很美的事未必是真的，務實一點。' } },
+    { no: 16, level: '上吉', title: '鴻雁傳書',
+      poem: ['秋空萬里雁成行', '帶得佳音過遠鄉', '久盼之人終有信', '開緘字字是吉祥'],
+      explain: '等待已久的消息即將傳來，而且是好消息。保持聯絡管道暢通，並耐心再等一下，結果會讓你安心。',
+      advice: { 學業: '申請或考試的結果會有好消息。', 感情: '久未聯絡的人會主動來訊，遠距離感情穩定。', 事業: '面試、提案或合作的回覆偏向正面。', 健康: '檢查報告結果良好，可以放心。', 財運: '等待中的款項或獎金會順利入帳。', 其他: '你在等的消息快到了，而且是好的。' } },
+    { no: 17, level: '中平', title: '量力而行',
+      poem: ['擔柴上嶺路迢遙', '貪重方知力不饒', '分作兩回從容走', '日斜也到灶前燒'],
+      explain: '一次想做太多反而會被拖垮。把目標拆成幾個小階段，照自己的能力分次完成，雖然慢一點但一定做得到。',
+      advice: { 學業: '讀書計畫排太滿了，拆成小段比較做得完。', 感情: '不要勉強自己迎合對方，照自己的步調相處。', 事業: '手上的事太多，先排優先順序、適度拒絕。', 健康: '過度勞累是警訊，減少負擔多休息。', 財運: '量入為出，不要超出能力消費或借貸。', 其他: '別一次想做完，分段進行。' } },
+    { no: 18, level: '上吉', title: '滿載而歸',
+      poem: ['撒網江心趁曉風', '銀鱗躍躍入船中', '歸來滿載斜陽裡', '一路歌聲過水東'],
+      explain: '把握時機行動就會有豐富的收穫。該出手的時候不要猶豫，這段時間的努力很容易換來看得見的成果。',
+      advice: { 學業: '趁狀態好多學一些，這陣子吸收特別快。', 感情: '有心儀的對象就把握機會邀約。', 事業: '業績與成果豐收，主動爭取會有回報。', 健康: '體力充沛，但收穫之餘別忘了休息。', 財運: '有不錯的進帳，記得存下一部分。', 其他: '機會來了就行動，收穫會很豐富。' } },
+    { no: 19, level: '上上', title: '錦上添花',
+      poem: ['園中牡丹已盛開', '更添彩蝶繞枝來', '好事成雙門前至', '笑迎賓客滿樓臺'],
+      explain: '原本就不錯的狀況還會再加分，好事可能接連發生。大方接受這份好運，也別忘了和身邊的人分享喜悅。',
+      advice: { 學業: '成績之外還有額外的肯定，例如獎項或推薦。', 感情: '喜事將近，感情可望更進一步。', 事業: '好表現帶來更多機會，雙喜臨門。', 健康: '身心狀態都好，保持愉快的心情。', 財運: '正財之外另有意外之喜。', 其他: '好事會成雙，安心接受。' } },
+    { no: 20, level: '中平', title: '退讓一步',
+      poem: ['窄巷相逢兩擔挑', '爭先各自費辛勞', '側身一讓春風過', '前路依然寬且遙'],
+      explain: '眼前的僵局來自雙方都不肯讓步。你先退一步並不吃虧，氣氛緩和後，事情反而比爭到底更容易解決。',
+      advice: { 學業: '分組報告有摩擦時先讓一步，進度才會動。', 感情: '爭吵時先低頭的人不是輸，關係比輸贏重要。', 事業: '與同事或客戶僵持時，換個條件談談看。', 健康: '少生悶氣，情緒放鬆身體才會好。', 財運: '金錢糾紛以和解為上，不要為小錢傷和氣。', 其他: '讓一步，路反而更寬。' } },
+    { no: 21, level: '上吉', title: '絕處逢生',
+      poem: ['山徑迂迴入亂雲', '前頭似已絕行人', '忽聞犬吠穿林出', '數戶炊煙隔水村'],
+      explain: '事情看似走到盡頭，其實出路就在不遠處。別在最困難的時候放棄，再往前幾步就會看到新的局面。',
+      advice: { 學業: '卡住的難題再多想一步就會通，別放棄。', 感情: '以為沒希望的關係，會出現意想不到的轉折。', 事業: '困境中會出現新的方法或新的合作對象。', 健康: '換個治療或調養方式，會找到適合的路。', 財運: '資金壓力會出現紓解的辦法。', 其他: '再堅持一下，出路就在前面。' } },
+    { no: 22, level: '下下', title: '欲速不達',
+      poem: ['策馬揚鞭趕夜程', '前橋已斷未曾聽', '急行反落泥塗裡', '不若燈前待曉明'],
+      explain: '你太急著要結果，反而容易忽略警訊而出錯。現在最需要的是放慢腳步、看清狀況，等條件明朗再前進。',
+      advice: { 學業: '臨時抱佛腳效果有限，這次先求穩不求高分。', 感情: '進展太快容易受傷，放慢腳步多觀察。', 事業: '倉促決定會出錯，重要文件務必再檢查一次。', 健康: '不要急著停藥或逞強，遵照醫囑慢慢來。', 財運: '想快速致富最容易賠錢，近期不要做重大財務決定。', 其他: '太急會壞事，等看清楚再動。' } },
+    { no: 23, level: '中平', title: '先苦後甘',
+      poem: ['初嘗橄欖澀難禁', '細嚼方知味漸深', '世事多從辛苦起', '回甘一縷值千金'],
+      explain: '一開始會比較辛苦，甚至懷疑值不值得。撐過前面這段適應期，後面會越來越順，也會嘗到甜美的回報。',
+      advice: { 學業: '新科目剛開始很吃力，熬過入門就會順。', 感情: '磨合期難免辛苦，撐過去感情會更深。', 事業: '新職務起步辛苦，累積經驗後會漸入佳境。', 健康: '復健或運動初期最難受，持續下去會改善。', 財運: '先節省一段時間，之後手頭會寬裕。', 其他: '先辛苦一陣子，後面會變好。' } },
+    { no: 24, level: '上上', title: '吉慶滿堂',
+      poem: ['瑞靄祥雲繞畫堂', '階前蘭桂競芬芳', '所求諸事皆如願', '福祿綿綿日月長'],
+      explain: '這是一支大吉的籤，所求之事多半能如願。保持善念與感恩的心，這份好運會持續很長一段時間。',
+      advice: { 學業: '目標可望達成，照計畫全力以赴。', 感情: '良緣已到，有情人可望修成正果。', 事業: '諸事順遂，重要的計畫可以放心推動。', 健康: '身體安康，家人也平安。', 財運: '財源穩定豐厚，行有餘力不妨幫助他人。', 其他: '所求如願，心存感恩。' } },
+    { no: 25, level: '上吉', title: '步步高升',
+      poem: ['石階層疊入雲端', '一步登時一步寬', '不必頻頻愁路遠', '抬頭已近好峰巒'],
+      explain: '你正在穩定地往上走，每一步都讓視野更開闊。不用擔心還有多遠，持續向前，離目標已經比想像中近。',
+      advice: { 學業: '成績逐步進步，離目標比你以為的更近。', 感情: '關係穩定升溫，一步一步來就好。', 事業: '職位與能力都在提升，繼續保持。', 健康: '體能逐漸變好，循序漸進增加強度。', 財運: '收入穩步成長，理財計畫持續執行。', 其他: '你正在進步，繼續往前走。' } },
+    { no: 26, level: '中平', title: '隨遇而安',
+      poem: ['浮萍逐水任東西', '遇著灣頭便暫棲', '莫怨此身無定處', '風平也有綠滿溪'],
+      explain: '環境的變動不是你能控制的，與其抱怨不如順勢調整。把眼前的每個階段過好，安定自然會慢慢到來。',
+      advice: { 學業: '環境或老師不如預期，先適應再求表現。', 感情: '緣分強求不來，順其自然就好。', 事業: '職務調動不必抗拒，新環境也有可學之處。', 健康: '接受身體目前的狀態，配合調整生活方式。', 財運: '收入起伏時彈性調整開銷。', 其他: '順其自然，先把眼前過好。' } },
+    { no: 27, level: '下下', title: '慎言避禍',
+      poem: ['茶坊酒肆話多端', '一句閒言起波瀾', '閉戶少談他人事', '是非不到耳邊安'],
+      explain: '近期容易因為說話或傳言惹上麻煩。少評論別人、不轉述未經證實的消息，低調一點就能避開不必要的紛爭。',
+      advice: { 學業: '少參與同學間的八卦，專心在自己的課業。', 感情: '氣話最傷人，開口前先冷靜三秒。', 事業: '職場上謹言慎行，重要的事留下書面紀錄。', 健康: '煩心事別悶著，也注意口腔與飲食衛生。', 財運: '不要替人作保或口頭承諾借錢。', 其他: '少說多聽，避開是非。' } },
+    { no: 28, level: '上吉', title: '雨過天晴',
+      poem: ['連宵風雨打窗紗', '曉起推門見彩霞', '泥路雖然猶未燥', '晴光已照萬人家'],
+      explain: '最辛苦的階段已經過去，情況正在好轉。雖然還有一些後續要收拾，但大方向已經轉好，可以放心往前走。',
+      advice: { 學業: '低潮期結束了，把之前落下的進度補起來。', 感情: '爭吵過後更了解彼此，關係可以修復。', 事業: '危機已過，接下來把善後工作做好。', 健康: '病情好轉，恢復期仍要注意保養。', 財運: '財務壓力減輕，逐步把欠款還清。', 其他: '最難的已經過去，會越來越好。' } },
+    { no: 29, level: '中平', title: '知足常樂',
+      poem: ['三間瓦舍傍溪居', '菜圃新苗半畝餘', '不羨高樓連廣廈', '一家溫飽樂何如'],
+      explain: '你已經擁有的其實不少。少和別人比較，把注意力放回自己真正需要的事物上，心裡踏實了，日子就過得好。',
+      advice: { 學業: '不必和頂尖的人比，達到自己的目標就很好。', 感情: '平凡的陪伴最珍貴，別拿對方和別人比較。', 事業: '目前的工作雖不耀眼，但穩定且適合你。', 健康: '粗茶淡飯、早睡早起就是最好的養生。', 財運: '夠用就好，降低物慾就不覺得缺。', 其他: '珍惜現有的，知足就是福。' } },
+    { no: 30, level: '上上', title: '天從人願',
+      poem: ['一炷清香上九霄', '誠心感得彩雲飄', '天時地利人和備', '萬里前程任君挑'],
+      explain: '天時、地利、人和都站在你這邊，是難得的好時機。只要心意真誠、目標明確，想做的事都有很高的機會成功。',
+      advice: { 學業: '各方面條件俱足，挑戰更高的目標也無妨。', 感情: '兩情相悅，時機、對象都對了。', 事業: '資源與支持到位，適合啟動重要計畫。', 健康: '元氣飽滿，維持良好習慣即可。', 財運: '正逢財運高點，穩健規劃可望豐收。', 其他: '時機正好，誠心去做就會成。' } }
+  ];
+
+  /* ========== 擲筊規則：聖筊 70%、笑筊 15%、陰筊 15% ========== */
+  var P_SHENG = 0.70, P_XIAO = 0.15;
+  var NEED_STREAK = 3;
+  var JIAO = {
+    sheng: { name: '聖筊', short: '聖', desc: '一平一凸，神明允准。' },
+    xiao:  { name: '笑筊', short: '笑', desc: '兩平面朝上，笑而不答，歸零。' },
+    yin:   { name: '陰筊', short: '陰', desc: '兩凸面朝上，神明不允，歸零。' }
+  };
+  function rollJiao(r) {
+    if (r === undefined) r = Math.random();
+    if (r < P_SHENG) return 'sheng';
+    if (r < P_SHENG + P_XIAO) return 'xiao';
+    return 'yin';
+  }
+  // 驗收用：在主控台輸入 yunduan.simulate(10000) 可檢查機率
+  function simulate(n) {
+    n = n || 10000;
+    var c = { sheng: 0, xiao: 0, yin: 0 };
+    for (var i = 0; i < n; i++) c[rollJiao()]++;
+    return { 次數: n, 聖筊: c.sheng / n, 笑筊: c.xiao / n, 陰筊: c.yin / n };
+  }
+
+  /* ========== 小工具 ========== */
+  function $(id) { return document.getElementById(id); }
+  var CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+  function toCn(n) {
+    if (n <= 10) return CN[n];
+    if (n < 20) return '十' + CN[n - 10];
+    var t = Math.floor(n / 10), u = n % 10;
+    return CN[t] + '十' + (u ? CN[u] : '');
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function parseDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    if (!m) return null;
+    var y = +m[1], mo = +m[2], d = +m[3];
+    var dt = new Date(y, mo - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+    return { y: y, m: mo, d: d };
+  }
+  function rocDate(s) {
+    var p = parseDate(s);
+    var era = p.y >= 1912 ? '民國 ' + (p.y - 1911) : '民國前 ' + (1912 - p.y);
+    return era + ' 年 ' + p.m + ' 月 ' + p.d + ' 日';
+  }
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var THROW_MS = reduceMotion ? 250 : 1000;
+  var SHAKE_MS = reduceMotion ? 400 : 1500;
+
+  /* ========== 音效：全部以 Web Audio API 即時合成 ========== */
+  var Sound = (function () {
+    var KEY = 'yunduan-muted';
+    var ctx = null, muted = false, shakeTimer = null;
+    try { muted = localStorage.getItem(KEY) === '1'; } catch (e) { /* 無法存取時維持預設 */ }
+
+    function ensure() {
+      if (muted) return null;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!ctx) { try { ctx = new AC(); } catch (e) { return null; } }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    function tone(freq, delay, dur, type, peak) {
+      var c = ensure(); if (!c) return;
+      var t = c.currentTime + delay;
+      var osc = c.createOscillator(), g = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g); g.connect(c.destination);
+      osc.start(t); osc.stop(t + dur + 0.05);
+    }
+    function noise(delay, dur, freq, q, peak) {
+      var c = ensure(); if (!c) return;
+      var t = c.currentTime + delay;
+      var len = Math.max(1, Math.floor(c.sampleRate * dur));
+      var buf = c.createBuffer(1, len, c.sampleRate);
+      var data = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      var src = c.createBufferSource(); src.buffer = buf;
+      var f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+      var g = c.createGain();
+      g.gain.setValueAtTime(peak, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(f); f.connect(g); g.connect(c.destination);
+      src.start(t); src.stop(t + dur + 0.02);
+    }
+    function stopShake() {
+      if (shakeTimer) { clearTimeout(shakeTimer); shakeTimer = null; }
+    }
+    return {
+      isMuted: function () { return muted; },
+      setMuted: function (v) {
+        muted = v;
+        try { localStorage.setItem(KEY, v ? '1' : '0'); } catch (e) { /* 忽略 */ }
+        if (v) stopShake();
+      },
+      unlock: function () { ensure(); },
+      // 筊杯落地：兩聲短促的木頭敲擊
+      knock: function () {
+        tone(760, 0, 0.09, 'triangle', 0.35); noise(0, 0.04, 1800, 1.2, 0.25);
+        tone(620, 0.09, 0.09, 'triangle', 0.35); noise(0.09, 0.04, 1800, 1.2, 0.25);
+      },
+      // 聖筊：一聲清亮的提示音
+      chime: function () { tone(1318.5, 0, 0.5, 'sine', 0.18); tone(2637, 0, 0.3, 'sine', 0.05); },
+      // 三連聖筊：上行三個音
+      triple: function () {
+        tone(523.25, 0, 0.45, 'triangle', 0.22);
+        tone(659.25, 0.16, 0.45, 'triangle', 0.22);
+        tone(783.99, 0.32, 0.6, 'triangle', 0.22);
+      },
+      // 搖籤筒：持續的竹籤沙沙聲
+      startShake: function (ms) {
+        stopShake();
+        var end = Date.now() + ms;
+        (function tick() {
+          if (Date.now() >= end) { shakeTimer = null; return; }
+          noise(0, 0.06, 3200 + Math.random() * 1800, 2.5, 0.22);
+          shakeTimer = setTimeout(tick, 70 + Math.random() * 50);
+        })();
+      },
+      stopShake: stopShake,
+      // 出籤：竹籤彈出的一聲
+      tick: function () { tone(900, 0, 0.07, 'triangle', 0.25); },
+      // 籤詩出現：磬音
+      bell: function () {
+        tone(660, 0, 2.2, 'sine', 0.22);
+        tone(1821, 0, 1.4, 'sine', 0.08);
+        tone(3564, 0, 0.8, 'sine', 0.03);
+      }
+    };
+  })();
+
+  /* ========== 狀態 ========== */
+  var state = {
+    stage: 'wish',      // wish | throw | draw | result
+    category: '',
+    birthday: '',
+    wish: '',
+    streak: 0,          // 連續聖筊數
+    throws: 0,          // 累計擲筊次數
+    history: [],        // 本次擲筊歷程
+    lot: null,          // 抽中的籤
+    lastLotNo: 0,       // 上一次抽中的籤號，避免連續重複
+    busy: false,
+    lockUntil: 0
+  };
+  var STAGES = ['wish', 'throw', 'draw', 'result'];
+  var sections = {};
+  STAGES.forEach(function (s) { sections[s] = $('stage-' + s); });
+  var stepItems = Array.prototype.slice.call(document.querySelectorAll('#steps li'));
+
+  function updateSteps() {
+    var idx = STAGES.indexOf(state.stage);
+    stepItems.forEach(function (li, i) {
+      li.classList.toggle('done', i < idx);
+      if (i === idx) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    });
+  }
+  function go(stage) {
+    var prev = sections[state.stage], next = sections[stage];
+    state.stage = stage;
+    updateSteps();
+    if (prev === next) return;
+    function swap() {
+      prev.hidden = true;
+      prev.classList.remove('fade-out');
+      next.hidden = false;
+      next.classList.remove('fade-in');
+      void next.offsetWidth;
+      next.classList.add('fade-in');
+      // 許願以外的畫面捲到步驟列，讓擲筊區和按鈕在手機上能同時看到
+      if (stage === 'wish') window.scrollTo(0, 0); else $('steps').scrollIntoView();
+      var h = next.querySelector('h2');
+      if (h) { try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); } }
+    }
+    if (reduceMotion) { swap(); return; }
+    prev.classList.add('fade-out');
+    setTimeout(swap, 150);
+  }
+
+  /* ========== 一、許願 ========== */
+  var form = $('wishForm'), birthdayEl = $('birthday'), wishEl = $('wish'), startBtn = $('startBtn');
+  var catInputs = Array.prototype.slice.call(document.querySelectorAll('input[name="category"]'));
+  var touched = { category: false, birthday: false, wish: false };
+  birthdayEl.max = todayStr();
+
+  function checkForm() {
+    var errs = {};
+    var cat = catInputs.filter(function (i) { return i.checked; })[0];
+    if (!cat) errs.category = '請選擇一個類別';
+    var b = birthdayEl.value;
+    if (!b) errs.birthday = '請填寫生日';
+    else {
+      var p = parseDate(b);
+      if (!p || p.y < 1900) errs.birthday = '請輸入正確的生日';
+      else if (b > todayStr()) errs.birthday = '生日不可晚於今天';
+    }
+    var w = wishEl.value.trim();
+    if (w.length < 2) errs.wish = '請至少輸入 2 個字';
+    else if (w.length > 100) errs.wish = '最多 100 個字';
+    return { errs: errs, category: cat ? cat.value : '', birthday: b, wish: w };
+  }
+  function refreshForm() {
+    var r = checkForm();
+    $('errCategory').textContent = touched.category && r.errs.category ? r.errs.category : '';
+    $('errBirthday').textContent = touched.birthday && r.errs.birthday ? r.errs.birthday : '';
+    $('errWish').textContent = touched.wish && r.errs.wish ? r.errs.wish : '';
+    $('wishCount').textContent = wishEl.value.length + '／100';
+    var ok = !r.errs.category && !r.errs.birthday && !r.errs.wish;
+    startBtn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+    return r;
+  }
+  catInputs.forEach(function (i) {
+    i.addEventListener('change', function () { touched.category = true; refreshForm(); });
+  });
+  birthdayEl.addEventListener('input', refreshForm);
+  ['change', 'blur'].forEach(function (ev) {
+    birthdayEl.addEventListener(ev, function () { touched.birthday = true; refreshForm(); });
+  });
+  wishEl.addEventListener('input', refreshForm);
+  wishEl.addEventListener('blur', function () { touched.wish = true; refreshForm(); });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    touched.category = touched.birthday = touched.wish = true;
+    var r = refreshForm();
+    if (r.errs.category) { catInputs[0].focus(); return; }
+    if (r.errs.birthday) { birthdayEl.focus(); return; }
+    if (r.errs.wish) { wishEl.focus(); return; }
+    state.category = r.category;
+    state.birthday = r.birthday;
+    state.wish = r.wish;
+    Sound.unlock();
+    resetThrow();
+    var subject = state.category === '其他' ? '今有一事請示' : '今為' + state.category + '之事請示';
+    $('report').textContent = '弟子生於' + rocDate(state.birthday) + '，' + subject + '：' + state.wish;
+    go('throw');
+  });
+
+  /* ========== 二、擲筊 ========== */
+  var throwBtn = $('throwBtn'), toDrawBtn = $('toDrawBtn');
+  var jiaoResult = $('jiaoResult'), jiaoName = $('jiaoName'), jiaoDesc = $('jiaoDesc');
+  var lampsEl = $('lamps'), lamps = Array.prototype.slice.call(lampsEl.children);
+  var CUP_OUTLINE = 'M58 8A64 64 0 0 0 58 132A160 160 0 0 1 58 8Z';
+
+  // 筊杯以 SVG 繪製：平面較淺且平整，凸面較深且有弧形亮部
+  function cupSVG(kind, mirror) {
+    var g = mirror ? '<g transform="translate(68 0) scale(-1 1)">' : '<g>';
+    var body = kind === 'flat'
+      ? '<path d="' + CUP_OUTLINE + '" fill="#EDD2A0" stroke="#B3261E" stroke-width="4" stroke-linejoin="round"/>' +
+        '<path d="M36 30A100 100 0 0 0 36 110" fill="none" stroke="#C59B5F" stroke-width="1.5" stroke-linecap="round"/>' +
+        '<path d="M24 50A70 70 0 0 0 24 90" fill="none" stroke="#C59B5F" stroke-width="1.5" stroke-linecap="round"/>'
+      : '<path d="' + CUP_OUTLINE + '" fill="#B3261E" stroke="#6E130F" stroke-width="4" stroke-linejoin="round"/>' +
+        '<path d="M42 30A120 120 0 0 0 42 110" fill="none" stroke="#7E1711" stroke-width="3" stroke-linecap="round" opacity=".6"/>' +
+        '<path d="M28 38A84 84 0 0 0 28 102" fill="none" stroke="#F3A79F" stroke-width="5" stroke-linecap="round" opacity=".8"/>';
+    return '<svg viewBox="-6 0 80 140" aria-hidden="true">' + g + body + '</g></svg>';
+  }
+  var cups = [
+    { el: $('cupL'), cap: $('capL'), mirror: false },
+    { el: $('cupR'), cap: $('capR'), mirror: true }
+  ];
+  cups.forEach(function (c) {
+    c.inner = c.el.querySelector('.cup-inner');
+    c.el.querySelector('.face.flat').innerHTML = cupSVG('flat', c.mirror);
+    c.el.querySelector('.face.round').innerHTML = cupSVG('round', c.mirror);
+    c.angle = 0;
+    c.rest = 'translate(0px,0px) rotate(0deg)';
+  });
+
+  function setCup(cup, face) {
+    cup.angle = face === 'round' ? 180 : 0;
+    cup.inner.style.transform = 'rotateX(' + cup.angle + 'deg)';
+  }
+  function animateCup(cup, face) {
+    var from = cup.angle, restFrom = cup.rest;
+    var target = face === 'round' ? 180 : 0;
+    var spin = 720 + target;
+    var dx = Math.round(Math.random() * 16 - 8), z = Math.round(Math.random() * 24 - 12);
+    cup.rest = 'translate(' + dx + 'px,0px) rotate(' + z + 'deg)';
+    cup.el.style.transform = cup.rest;
+    setCup(cup, face);
+    if (!cup.el.animate) return;
+    if (reduceMotion) {
+      cup.el.animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: THROW_MS });
+      return;
+    }
+    cup.inner.animate([
+      { transform: 'rotateX(' + from + 'deg)' },
+      { transform: 'rotateX(' + spin + 'deg)', offset: 0.78 },
+      { transform: 'rotateX(' + spin + 'deg)' }
+    ], { duration: THROW_MS, easing: 'linear' });
+    cup.el.animate([
+      { transform: restFrom, easing: 'cubic-bezier(.2,.7,.4,1)' },
+      { transform: 'translate(' + (dx / 2) + 'px,-72px) rotate(' + (-z) + 'deg)', offset: 0.4, easing: 'cubic-bezier(.6,0,.9,.5)' },
+      { transform: cup.rest, offset: 0.78, easing: 'ease-out' },
+      { transform: 'translate(' + dx + 'px,-10px) rotate(' + z + 'deg)', offset: 0.89, easing: 'ease-in' },
+      { transform: cup.rest }
+    ], { duration: THROW_MS });
+  }
+
+  function renderThrow() {
+    lamps.forEach(function (l, i) { l.classList.toggle('on', i < state.streak); });
+    lampsEl.setAttribute('aria-label', '連續聖筊 ' + state.streak + '／' + NEED_STREAK);
+    $('tally').textContent = '已擲 ' + state.throws + ' 次';
+    var box = $('history');
+    box.textContent = '';
+    state.history.forEach(function (o) {
+      var s = document.createElement('span');
+      s.className = 'chip ' + o;
+      s.textContent = JIAO[o].short;
+      s.title = JIAO[o].name;
+      box.appendChild(s);
+    });
+  }
+  function resetThrow() {
+    state.streak = 0; state.throws = 0; state.history = []; state.lot = null; state.busy = false;
+    cups.forEach(function (c) {
+      c.rest = 'translate(0px,0px) rotate(0deg)';
+      c.el.style.transform = c.rest;
+      setCup(c, 'flat');
+      c.cap.textContent = '';
+    });
+    jiaoResult.className = 'jiao-result';
+    jiaoName.textContent = '';
+    jiaoDesc.textContent = '請默念所求之事，然後擲筊。';
+    throwBtn.hidden = false;
+    throwBtn.setAttribute('aria-disabled', 'false');
+    toDrawBtn.hidden = true;
+    renderThrow();
+  }
+  function throwJiao() {
+    if (state.stage !== 'throw' || state.busy || state.streak >= NEED_STREAK) return;
+    state.busy = true;
+    throwBtn.setAttribute('aria-disabled', 'true');
+    Sound.unlock();
+    var outcome = rollJiao();
+    var faces;
+    if (outcome === 'sheng') faces = Math.random() < 0.5 ? ['flat', 'round'] : ['round', 'flat'];
+    else if (outcome === 'xiao') faces = ['flat', 'flat'];
+    else faces = ['round', 'round'];
+    cups.forEach(function (c, i) { c.cap.textContent = ''; animateCup(c, faces[i]); });
+    setTimeout(function () { Sound.knock(); }, Math.round(THROW_MS * 0.76));
+    setTimeout(function () { finishThrow(outcome, faces); }, THROW_MS);
+  }
+  function finishThrow(outcome, faces) {
+    if (state.stage !== 'throw') { state.busy = false; return; }
+    state.throws++;
+    state.history.push(outcome);
+    state.streak = outcome === 'sheng' ? state.streak + 1 : 0;
+    cups.forEach(function (c, i) { c.cap.textContent = faces[i] === 'flat' ? '平面' : '凸面'; });
+    jiaoResult.className = 'jiao-result ' + outcome;
+    jiaoName.textContent = JIAO[outcome].name;
+    renderThrow();
+    state.busy = false;
+    if (state.streak >= NEED_STREAK) {
+      jiaoDesc.textContent = '三連聖筊，神明允准，請抽籤。';
+      Sound.triple();
+      var hadFocus = document.activeElement === throwBtn;
+      throwBtn.hidden = true;
+      toDrawBtn.hidden = false;
+      state.lockUntil = Date.now() + 600;   // 避免連按時直接跳過
+      if (hadFocus) toDrawBtn.focus();
+      return;
+    }
+    jiaoDesc.textContent = JIAO[outcome].desc;
+    if (outcome === 'sheng') Sound.chime();
+    throwBtn.setAttribute('aria-disabled', 'false');
+  }
+  throwBtn.addEventListener('click', throwJiao);
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== ' ' && e.code !== 'Space') return;
+    if (state.stage !== 'throw' || state.streak >= NEED_STREAK) return;
+    var tag = e.target && e.target.tagName;
+    // 焦點在按鈕或輸入欄位時，交給瀏覽器原本的行為
+    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'A') return;
+    e.preventDefault();
+    if (!e.repeat) throwJiao();
+  });
+  toDrawBtn.addEventListener('click', function () {
+    if (state.streak < NEED_STREAK || Date.now() < state.lockUntil) return;
+    resetDraw();
+    go('draw');
+  });
+  $('rewishBtn').addEventListener('click', function () {
+    if (state.busy) return;
+    resetThrow();
+    go('wish');
+  });
+
+  /* ========== 三、抽籤 ========== */
+  var tubeBtn = $('tubeBtn'), shakeBtn = $('shakeBtn'), viewBtn = $('viewBtn'), drawMsg = $('drawMsg');
+
+  function resetDraw() {
+    state.lot = null; state.busy = false;
+    tubeBtn.classList.remove('shaking', 'drawn');
+    tubeBtn.disabled = false;
+    shakeBtn.hidden = false;
+    shakeBtn.setAttribute('aria-disabled', 'false');
+    viewBtn.hidden = true;
+    drawMsg.textContent = '點擊籤筒開始抽籤';
+  }
+  // 30 首等機率，且不與上一次抽中的重複
+  function pickLot() {
+    var lot;
+    do { lot = LOTS[Math.floor(Math.random() * LOTS.length)]; } while (lot.no === state.lastLotNo);
+    return lot;
+  }
+  function drawLot() {
+    // 只有連續三個聖筊後才能抽，且每次求籤只能抽一支
+    if (state.stage !== 'draw' || state.streak < NEED_STREAK || state.busy || state.lot) return;
+    state.busy = true;
+    shakeBtn.setAttribute('aria-disabled', 'true');
+    drawMsg.textContent = '搖籤中⋯⋯';
+    Sound.unlock();
+    Sound.startShake(SHAKE_MS);
+    tubeBtn.classList.add('shaking');
+    setTimeout(function () {
+      Sound.stopShake();
+      if (state.stage !== 'draw') { state.busy = false; return; }
+      var hadFocus = document.activeElement === shakeBtn || document.activeElement === tubeBtn;
+      tubeBtn.classList.remove('shaking');
+      state.lot = pickLot();
+      state.lastLotNo = state.lot.no;
+      tubeBtn.classList.add('drawn');
+      tubeBtn.disabled = true;
+      Sound.tick();
+      drawMsg.textContent = '抽中 第' + toCn(state.lot.no) + '籤';
+      shakeBtn.hidden = true;
+      viewBtn.hidden = false;
+      state.lockUntil = Date.now() + 500;
+      if (hadFocus) viewBtn.focus();
+      state.busy = false;
+    }, SHAKE_MS);
+  }
+  tubeBtn.addEventListener('click', drawLot);
+  shakeBtn.addEventListener('click', drawLot);
+  viewBtn.addEventListener('click', function () {
+    if (!state.lot || Date.now() < state.lockUntil) return;
+    showResult();
+  });
+
+  /* ========== 四、解籤 ========== */
+  var copyBtn = $('copyBtn'), copyTimer = null;
+
+  function lotHead(lot) { return '第' + toCn(lot.no) + '籤'; }
+  function showResult() {
+    var lot = state.lot;
+    $('resNo').textContent = lotHead(lot);
+    var lv = $('resLevel');
+    lv.textContent = lot.level;
+    lv.setAttribute('data-level', lot.level);
+    $('resTitle').textContent = '〈' + lot.title + '〉';
+    var poem = $('poem');
+    poem.textContent = '';
+    lot.poem.forEach(function (line) {
+      var p = document.createElement('p');
+      p.textContent = line;
+      poem.appendChild(p);
+    });
+    $('resExplain').textContent = lot.explain;
+    $('resAdviceLabel').textContent = state.category + '建議';
+    $('resAdvice').textContent = lot.advice[state.category];
+    $('resWish').textContent = state.wish;
+    var card = $('resultCard');
+    card.classList.remove('rise');
+    go('result');
+    setTimeout(function () {
+      void card.offsetWidth;
+      card.classList.add('rise');
+      Sound.bell();
+    }, reduceMotion ? 0 : 150);
+  }
+  function lotText() {
+    var lot = state.lot;
+    return [
+      '【雲端宮線上靈籤】' + lotHead(lot) + '・' + lot.level,
+      '〈' + lot.title + '〉',
+      lot.poem[0] + '，' + lot.poem[1] + '。',
+      lot.poem[2] + '，' + lot.poem[3] + '。',
+      '',
+      '解說：' + lot.explain,
+      state.category + '建議：' + lot.advice[state.category],
+      '',
+      '（原創籤詩，僅供娛樂）'
+    ].join('\n');
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function copyDone(ok) {
+    copyBtn.textContent = ok ? '已複製' : '複製失敗';
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(function () { copyBtn.textContent = '複製籤詩文字'; }, 2000);
+  }
+  copyBtn.addEventListener('click', function () {
+    if (!state.lot) return;
+    var text = lotText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { copyDone(true); }, function () { copyDone(fallbackCopy(text)); });
+    } else {
+      copyDone(fallbackCopy(text));
+    }
+  });
+
+  // 以 Canvas 畫出 1080×1350 的籤詩卡（不含生日與願望文字）
+  function wrapText(c, text, x, y, maxW, lineH) {
+    var noStart = '，。、；：？！」』）';
+    var line = '';
+    Array.from(text).forEach(function (ch) {
+      if (line && c.measureText(line + ch).width > maxW && noStart.indexOf(ch) < 0) {
+        c.fillText(line, x, y); y += lineH; line = ch;
+      } else {
+        line += ch;
+      }
+    });
+    if (line) { c.fillText(line, x, y); y += lineH; }
+    return y;
+  }
+  function renderImage() {
+    var lot = state.lot, W = 1080, H = 1350;
+    var css = getComputedStyle(document.documentElement);
+    var KAI = css.getPropertyValue('--font-kai').trim() || 'serif';
+    var SANS = css.getPropertyValue('--font-sans').trim() || 'sans-serif';
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var c = cv.getContext('2d');
+
+    c.fillStyle = '#5C0F0B'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = '#D4A84B';
+    c.lineWidth = 6; c.strokeRect(27, 27, W - 54, H - 54);
+    c.lineWidth = 2; c.strokeRect(42, 42, W - 84, H - 84);
+    c.fillStyle = '#F7EFDD'; c.fillRect(64, 64, W - 128, H - 128);
+
+    c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+    c.fillStyle = '#B3261E'; c.font = '48px ' + KAI;
+    c.fillText('雲端宮線上靈籤', W / 2, 158);
+    c.strokeStyle = '#D4A84B'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(W / 2 - 190, 186); c.lineTo(W / 2 + 190, 186); c.stroke();
+    c.fillStyle = '#2B1D14'; c.font = 'bold 74px ' + KAI;
+    c.fillText(lotHead(lot) + '・' + lot.level, W / 2, 284);
+    c.fillStyle = '#B3261E'; c.font = '56px ' + KAI;
+    c.fillText('〈' + lot.title + '〉', W / 2, 368);
+
+    // 籤詩直排，由右至左
+    var top = 412, rowH = 60, colW = 124;
+    c.fillStyle = '#2B1D14'; c.font = '54px ' + KAI; c.textBaseline = 'top';
+    lot.poem.forEach(function (line, i) {
+      var x = W / 2 + (1.5 - i) * colW;
+      Array.from(line).forEach(function (ch, j) { c.fillText(ch, x, top + j * rowH); });
+    });
+
+    var y = top + 7 * rowH + 30;
+    c.strokeStyle = '#D4A84B'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(130, y); c.lineTo(W - 130, y); c.stroke();
+    y += 54;
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.font = '34px ' + SANS;
+    c.fillStyle = '#2B1D14';
+    y = wrapText(c, '解說：' + lot.explain, 130, y, W - 260, 48);
+    y += 12;
+    c.fillStyle = '#8A1B15';
+    wrapText(c, state.category + '建議：' + lot.advice[state.category], 130, y, W - 260, 48);
+
+    c.textAlign = 'center'; c.fillStyle = '#6B5646'; c.font = '26px ' + SANS;
+    c.fillText('原創籤詩・僅供娛樂', W / 2, H - 100);
+    return cv;
+  }
+  $('saveBtn').addEventListener('click', function () {
+    if (!state.lot) return;
+    var cv = renderImage();
+    var name = '雲端宮第' + state.lot.no + '籤.png';
+    function save(url) {
+      var a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    if (cv.toBlob) {
+      cv.toBlob(function (blob) {
+        if (!blob) { save(cv.toDataURL('image/png')); return; }
+        var url = URL.createObjectURL(blob);
+        save(url);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+      }, 'image/png');
+    } else {
+      save(cv.toDataURL('image/png'));
+    }
+  });
+
+  // 再求一支：保留類別與生日，清空願望、進度與擲筊歷程
+  $('againBtn').addEventListener('click', function () {
+    wishEl.value = '';
+    state.wish = '';
+    touched.wish = false;
+    resetThrow();
+    resetDraw();
+    refreshForm();
+    go('wish');
+  });
+
+  /* ========== 靜音 ========== */
+  var muteBtn = $('muteBtn');
+  function renderMute() {
+    var m = Sound.isMuted();
+    muteBtn.setAttribute('aria-pressed', m ? 'true' : 'false');
+    muteBtn.title = m ? '已靜音，點擊開啟聲音' : '聲音開啟中，點擊靜音';
+  }
+  muteBtn.addEventListener('click', function () {
+    Sound.setMuted(!Sound.isMuted());
+    renderMute();
+    if (!Sound.isMuted()) { Sound.unlock(); Sound.tick(); }
+  });
+
+  /* ========== 初始化 ========== */
+  renderMute();
+  updateSteps();
+  resetThrow();
+  resetDraw();
+  refreshForm();
+
+  window.yunduan = { simulate: simulate, lots: LOTS, renderImage: renderImage };
+})();
+</script>
+</body>
+</html>
